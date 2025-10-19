@@ -8,12 +8,12 @@ import (
 	"strconv"
 )
 
+var data []data_handler.Response
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.URL.Path[1:])
 	log.Println("ID:", r.URL.Path[1:])
-	// fmt.Fprintf(w, "<title>Sat tracker</title>")
 
-	data := data_handler.GetData()
 	sat := data_handler.GetByID(id, data)
 
 	var ret data_handler.Member
@@ -28,7 +28,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Listen() {
+func Listen(d []data_handler.Response) {
+	data = d
 	log.Println("Starting listener on :4321")
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe(":4321", nil))

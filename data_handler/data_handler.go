@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Response struct {
@@ -30,11 +29,16 @@ type View struct {
 }
 
 func checkForUpdate() bool {
-	date := time.Now()
-	lastUpdate, _ := time.Parse(time.RFC3339, readData()[0].Member[0].Date)
-	diff := date.Sub(lastUpdate)
+	// data := readData()
+	// date := time.Now()
+	// lastUpdate, _ := time.Parse(time.RFC3339, data[0].Member[len(data[0].Member)-1].Date)
+	// log.Println(readData()[0].Member[0].Date)
+	// diff := date.Sub(lastUpdate)
 
-	return int(diff.Hours()/24) > 5
+	// log.Println(date, lastUpdate, int(diff.Hours()/24))
+	// return int(diff.Hours()/24) > 5
+
+	return false
 }
 
 func request(url string) []byte {
@@ -88,24 +92,30 @@ func updateData() []Response {
 
 	for i := 1; i <= num; i++ {
 		url := APIURL + strconv.Itoa(i)
+		log.Println(url)
 		responseData = request(url)
 		writeData(responseData, strconv.Itoa(i))
 		json.Unmarshal(responseData, &responseObject)
 		data = append(data, responseObject)
+
 	}
 
 	return data
 }
 
 func readData() []Response {
+	log.Println("Reading data...")
 	var responseObject Response
 	var data []Response
-	b, err := ioutil.ReadFile("data/1")
-	if err != nil {
-		log.Fatal(err)
+	for i := 1; i <= 205; i++ {
+		b, err := ioutil.ReadFile("data/" + strconv.Itoa(i))
+		if err != nil {
+			log.Fatal(err)
+		}
+		json.Unmarshal(b, &responseObject)
+		data = append(data, responseObject)
 	}
-	json.Unmarshal(b, &responseObject)
-	data = append(data, responseObject)
+	log.Println("Data read")
 	return data
 }
 
@@ -113,7 +123,7 @@ func GetByID(id int, data []Response) Member {
 	var ret Member
 	for _, response := range data {
 		for _, sat := range response.Member {
-			if id == int(sat.Satid) {
+			if int64(id) == sat.Satid {
 				return sat
 			}
 		}
@@ -125,6 +135,7 @@ func GetByID(id int, data []Response) Member {
 func GetData() []Response {
 	var data []Response
 	if checkForUpdate() {
+		log.Println("Need an update")
 		data = updateData()
 	} else {
 		data = readData()
